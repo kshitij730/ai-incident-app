@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIOps Incident Assistant</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #0a0e1a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        padding: 40px 20px;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+    h1 { color: #38bdf8; font-size: 26px; margin-bottom: 6px; }
+    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+    .slo-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .slo-chip {
+        flex: 1;
+        background: #131a2b;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        padding: 14px;
+        text-align: center;
+    }
+    .slo-chip .value { font-size: 20px; font-weight: 700; color: #38bdf8; }
+    .slo-chip .label { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .card {
+        background: #131a2b;
+        border-radius: 14px;
+        padding: 28px;
+        margin-bottom: 20px;
+        border: 1px solid #1e293b;
+    }
+    label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+    input, textarea {
+        width: 100%;
+        background: #0a0e1a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 12px 14px;
+        color: #e2e8f0;
+        font-size: 14px;
+        outline: none;
+        margin-bottom: 16px;
+    }
+    textarea { min-height: 140px; resize: vertical; font-family: monospace; }
+    input:focus, textarea:focus { border-color: #38bdf8; }
+    button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #ef4444, #f97316);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { display: none; margin-top: 20px; }
+    .result.show { display: block; }
+    .severity-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+    .sev-Critical { background: #dc2626; }
+    .sev-High { background: #ef4444; }
+    .sev-Medium { background: #f59e0b; }
+    .sev-Low { background: #22c55e; }
+    pre {
+        white-space: pre-wrap;
+        font-size: 13px;
+        line-height: 1.7;
+        color: #cbd5e1;
+        background: #0a0e1a;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    .meta { font-size: 12px; color: #64748b; margin-top: 10px; }
+    .jira-link { color: #38bdf8; font-size: 13px; margin-top: 8px; display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🚨 AIOps Incident Assistant</h1>
+    <p class="subtitle">RAG-powered root cause analysis with ChatOps + Jira integration</p>
+
+    <div class="slo-bar">
+        <div class="slo-chip">
+            <div class="value" id="totalIncidents">-</div>
+            <div class="label">Total Incidents</div>
+        </div>
+        <div class="slo-chip">
+            <div class="value" id="criticalIncidents">-</div>
+            <div class="label">Critical/High</div>
+        </div>
+        <div class="slo-chip">
+            <div class="value" id="errorBudget">-</div>
+            <div class="label">Error Budget Used</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <label>API URL</label>
+        <input type="text" id="apiUrl" value="http://localhost:8000">
+
+        <label>Service Name</label>
+        <input type="text" id="serviceName" placeholder="e.g. payment-service" value="payment-service">
+
+        <label>Error Log</label>
+        <textarea id="errorLog" placeholder="Paste your error log here...
+e.g. ConnectionTimeoutError: Database connection pool exhausted after 30s"></textarea>
+
+        <button id="analyzeBtn" onclick="analyzeIncident()">Analyze Incident</button>
+    </div>
+
+    <div class="card result" id="resultCard">
+        <span class="severity-badge" id="severityBadge">SEVERITY</span>
+        <pre id="diagnosisText"></pre>
+        <div class="meta" id="metaText"></div>
+        <span class="jira-link" id="jiraLink"></span>
+    </div>
+</div>
+
+<script>
+const apiUrlInput = document.getElementById('apiUrl');
+
+async function loadSLO() {
+    try {
+        const res = await fetch(`${apiUrlInput.value}/slo-status`);
+        const data = await res.json();
+        document.getElementById('totalIncidents').textContent = data.total_incidents_analyzed;
+        document.getElementById('criticalIncidents').textContent = data.critical_incidents;
+        document.getElementById('errorBudget').textContent = data.error_budget_used_percent + '%';
+    } catch (e) { console.log('SLO fetch failed'); }
+}
+
+async function analyzeIncident() {
+    const apiUrl = apiUrlInput.value.trim();
+    const serviceName = document.getElementById('serviceName').value.trim();
+    const errorLog = document.getElementById('errorLog').value.trim();
+    const btn = document.getElementById('analyzeBtn');
+    const resultCard = document.getElementById('resultCard');
+
+    if (!errorLog) { alert('Error log daalo!'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+    resultCard.classList.remove('show');
+
+    try {
+        const res = await fetch(`${apiUrl}/analyze-incident`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error_log: errorLog, service_name: serviceName })
+        });
+
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        const data = await res.json();
+
+        document.getElementById('diagnosisText').textContent = data.diagnosis;
+        document.getElementById('metaText').textContent =
+            `${data.similar_incidents_found} similar past incidents found | Service: ${data.service_name}`;
+
+        const badge = document.getElementById('severityBadge');
+        badge.textContent = data.severity.toUpperCase();
+        badge.className = `severity-badge sev-${data.severity}`;
+
+        const jiraLink = document.getElementById('jiraLink');
+        jiraLink.textContent = data.jira_ticket ? `📋 Jira Ticket Created: ${data.jira_ticket}` : '';
+
+        resultCard.classList.add('show');
+        loadSLO();
+
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analyze Incident';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadSLO);
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiops-incident-app
+  labels:
+    app: aiops-incident-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: aiops-incident-app
+  template:
+    metadata:
+      labels:
+        app: aiops-incident-app
+    spec:
+      containers:
+        - name: aiops-incident-app
+          image: kshitijsharma788/aiops-incident-app:latest
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          envFrom:
+            - configMapRef:
+                name: aiops-config
+            - secretRef:
+                name: aiops-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

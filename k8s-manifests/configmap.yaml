@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aiops-config
+data:
+  PINECONE_INDEX_NAME: "incident-index"
+  JIRA_PROJECT_KEY: "KAN"
