@@ -11,9 +11,9 @@ env:
   IMAGE_NAME: kshitijsharma788/aiops-incident-app
 
 jobs:
-  # ─────────────────────────────────────────────
+  # -------------------------------------------
   # JOB 1: CI - Build, Test, Push
-  # ─────────────────────────────────────────────
+  # -------------------------------------------
   build-test-push:
     runs-on: ubuntu-latest
     outputs:
@@ -48,7 +48,7 @@ jobs:
       - name: Smoke test - Frontend check
         run: |
           echo "Checking /ui frontend..."
-          curl -sf http://localhost:8000/ui | grep -qi "AIOps Incident Assistant" \
+          curl -sfL http://localhost:8000/ui | grep -qi "AIOps Incident Assistant" \
             || (echo "Frontend not serving correctly!" && docker logs test-container && exit 1)
           echo "Frontend is serving correctly"
           docker stop test-container && docker rm test-container
@@ -75,9 +75,9 @@ jobs:
           --data "{\"text\":\"CI passed (health + frontend tested) - image ${{ steps.sha.outputs.short_sha }} pushed to DockerHub\"}" \
           "${{ secrets.SLACK_WEBHOOK_URL }}"
 
-  # ─────────────────────────────────────────────
+  # -------------------------------------------
   # JOB 2: CD - Update manifest, trigger ArgoCD sync
-  # ─────────────────────────────────────────────
+  # -------------------------------------------
   deploy:
     needs: build-test-push
     runs-on: ubuntu-latest
