@@ -3,5 +3,6 @@ __pycache__
 .env
 .git
 .gitignore
-frontend
 scripts
+k8s-manifests
+argocd

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import logging
 import requests
 import os
@@ -16,7 +17,7 @@ app = FastAPI(
     description="RAG-powered root cause analysis with ChatOps and Jira integration",
     version="2.0.0"
 )
-
+app.mount("/ui", StaticFiles(directory="frontend", html=True), name="frontend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
