@@ -16,3 +16,4 @@ venv/
 .DS_Store
 actions-runner/
 argocd-ns.json
+actions-runner/

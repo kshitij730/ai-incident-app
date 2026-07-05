@@ -78,12 +78,13 @@ jobs:
   deploy:
     needs: build-test-push
     runs-on: self-hosted
+    env:
+      KUBECONFIG: /home/ubuntu/.kube/config
     steps:
       - name: Deploy to k3s cluster
         run: |
           kubectl set image deployment/aiops-incident-app \
-            aiops-incident-app=${{ env.IMAGE_NAME }}:${{ needs.build-test-push.outputs.short_sha }} \
-            --record
+            aiops-incident-app=${{ env.IMAGE_NAME }}:${{ needs.build-test-push.outputs.short_sha }}
           kubectl rollout status deployment/aiops-incident-app --timeout=120s
 
       - name: Notify Slack - Deployment complete
