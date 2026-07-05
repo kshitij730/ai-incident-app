@@ -3,15 +3,12 @@ name: CI-CD Pipeline
 on:
   push:
     branches: [main]
-<<<<<<< HEAD
-=======
 
 permissions:
   contents: write
->>>>>>> 2f93cb7 (AIOps ncident assistant with ChatOps, Jira, CI/CD)
 
 env:
-  IMAGE_NAME: YOUR_DOCKERHUB_USERNAME/aiops-incident-app
+  IMAGE_NAME: kshitijsharma788/aiops-incident-app
 
 jobs:
   # ─────────────────────────────────────────────
@@ -39,7 +36,7 @@ jobs:
           load: true
           tags: test-image:${{ steps.sha.outputs.short_sha }}
 
-      - name: Smoke test — API health check
+      - name: Smoke test - API health check
         run: |
           docker run -d --name test-container -p 8000:8000 \
             -e PINECONE_API_KEY=dummy -e HF_API_TOKEN=dummy \
@@ -48,12 +45,12 @@ jobs:
           echo "Checking /health endpoint..."
           curl -sf http://localhost:8000/health || (docker logs test-container && exit 1)
 
-      - name: Smoke test — Frontend check
+      - name: Smoke test - Frontend check
         run: |
           echo "Checking /ui frontend..."
           curl -sf http://localhost:8000/ui | grep -qi "AIOps Incident Assistant" \
-            || (echo "❌ Frontend not serving correctly!" && docker logs test-container && exit 1)
-          echo "✅ Frontend is serving correctly"
+            || (echo "Frontend not serving correctly!" && docker logs test-container && exit 1)
+          echo "Frontend is serving correctly"
           docker stop test-container && docker rm test-container
 
       - name: Login to DockerHub
@@ -71,11 +68,11 @@ jobs:
             ${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.short_sha }}
             ${{ env.IMAGE_NAME }}:latest
 
-      - name: Notify Slack — CI passed
+      - name: Notify Slack - CI passed
         if: success()
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"✅ CI passed (health + frontend tested) — image ${{ steps.sha.outputs.short_sha }} pushed to DockerHub\"}" \
+          --data "{\"text\":\"CI passed (health + frontend tested) - image ${{ steps.sha.outputs.short_sha }} pushed to DockerHub\"}" \
           "${{ secrets.SLACK_WEBHOOK_URL }}"
 
   # ─────────────────────────────────────────────
@@ -102,8 +99,8 @@ jobs:
           git commit -m "CD: deploy image ${{ needs.build-test-push.outputs.short_sha }} [skip ci]" || echo "No changes to commit"
           git push
 
-      - name: Notify Slack — CD triggered
+      - name: Notify Slack - CD triggered
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"🚀 CD triggered — ArgoCD will sync image ${{ needs.build-test-push.outputs.short_sha }} to k3s cluster within seconds\"}" \
+          --data "{\"text\":\"CD triggered - ArgoCD will sync image ${{ needs.build-test-push.outputs.short_sha }} to k3s cluster within seconds\"}" \
           "${{ secrets.SLACK_WEBHOOK_URL }}"
