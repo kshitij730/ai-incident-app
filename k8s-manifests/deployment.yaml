@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: aiops-incident-app
-          image: kshitijsharma788/aiops-incident-app:latest
+          image: kshitijsharma788/aiops-incident-app:3628af3
           ports:
             - containerPort: 8000
           resources:
