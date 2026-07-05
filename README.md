@@ -2,7 +2,7 @@
 
 > A production-style, RAG-powered incident diagnosis platform built to demonstrate end-to-end DevOps + AIOps engineering — from CI/CD and Kubernetes orchestration to ChatOps automation and SRE observability practices.
 
-[![CI/CD](https://github.com/kshitij730/ai-incident-app/actions/workflows/build-push.yaml/badge.svg)](https://github.com/kshitij730/ai-incident-app/actions)
+![CI/CD](https://img.shields.io/badge/GitHub-Actions-2088FF?logo=githubactions&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/k3s-326CE5?style=flat&logo=kubernetes&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
