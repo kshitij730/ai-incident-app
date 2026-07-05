@@ -6,6 +6,8 @@ metadata:
     app: aiops-incident-app
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: aiops-incident-app
@@ -16,7 +18,7 @@ spec:
     spec:
       containers:
         - name: aiops-incident-app
-          image: kshitijsharma788/aiops-incident-app:3628af3
+          image: kshitijsharma788/aiops-incident-app:latest
           ports:
             - containerPort: 8000
           resources:
@@ -35,11 +37,11 @@ spec:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 15
+            initialDelaySeconds: 15
+            periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 15
