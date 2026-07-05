@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: write
-
 env:
   IMAGE_NAME: kshitijsharma788/aiops-incident-app
 
@@ -76,31 +73,21 @@ jobs:
           "${{ secrets.SLACK_WEBHOOK_URL }}"
 
   # -------------------------------------------
-  # JOB 2: CD - Update manifest, trigger ArgoCD sync
+  # JOB 2: CD - Direct deploy to k3s via self-hosted runner
   # -------------------------------------------
   deploy:
     needs: build-test-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Update image tag in K8s manifest
+      - name: Deploy to k3s cluster
         run: |
-          sed -i "s|image: .*aiops-incident-app.*|image: ${{ env.IMAGE_NAME }}:${{ needs.build-test-push.outputs.short_sha }}|g" k8s-manifests/deployment.yaml
-          echo "Updated manifest:"
-          grep "image:" k8s-manifests/deployment.yaml
+          kubectl set image deployment/aiops-incident-app \
+            aiops-incident-app=${{ env.IMAGE_NAME }}:${{ needs.build-test-push.outputs.short_sha }} \
+            --record
+          kubectl rollout status deployment/aiops-incident-app --timeout=120s
 
-      - name: Commit and push updated manifest
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add k8s-manifests/deployment.yaml
-          git commit -m "CD: deploy image ${{ needs.build-test-push.outputs.short_sha }} [skip ci]" || echo "No changes to commit"
-          git push
-
-      - name: Notify Slack - CD triggered
+      - name: Notify Slack - Deployment complete
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"CD triggered - ArgoCD will sync image ${{ needs.build-test-push.outputs.short_sha }} to k3s cluster within seconds\"}" \
+          --data "{\"text\":\"Deployed image ${{ needs.build-test-push.outputs.short_sha }} directly to k3s cluster\"}" \
           "${{ secrets.SLACK_WEBHOOK_URL }}"

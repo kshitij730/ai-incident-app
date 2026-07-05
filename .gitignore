@@ -14,3 +14,5 @@ venv/
 # IDE/OS
 .vscode/
 .DS_Store
+actions-runner/
+argocd-ns.json
