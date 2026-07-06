@@ -49,7 +49,7 @@ def create_jira_ticket(service_name: str, error_log: str, diagnosis: str, severi
                     }
                 ]
             },
-            "issuetype": {"name": "Task"},,
+            "issuetype": {"name": "Task"},
             "priority": {"name": SEVERITY_TO_PRIORITY.get(severity, "Medium")}
         }
     }
