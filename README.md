@@ -58,45 +58,45 @@ In real production environments, when a service throws an error, engineers spend
 
 ```
                           ┌─────────────────────────────┐
-                          │         GitHub Repo          │
-                          │  (app code + K8s manifests)  │
-                          └───────────────┬───────────────┘
+                          │         GitHub Repo         │
+                          │  (app code + K8s manifests) │
+                          └───────────────┬─────────────┘
                                           │ git push
                                           ▼
                           ┌─────────────────────────────┐
-                          │      GitHub Actions CI       │
-                          │  Build → Smoke Test → Push   │
-                          │        (DockerHub)           │
-                          └───────────────┬───────────────┘
+                          │      GitHub Actions CI      │
+                          │  Build → Smoke Test → Push  │
+                          │        (DockerHub)          │
+                          └───────────────┬─────────────┘
                                           │
                                           ▼
-                          ┌─────────────────────────────┐
+                          ┌──────────────────────────────┐
                           │  Self-Hosted Runner (on EC2) │
                           │   kubectl set image (CD)     │
-                          └───────────────┬───────────────┘
+                          └───────────────┬──────────────┘
                                           ▼
         ┌───────────────────────────────────────────────────────────┐
-        │                     k3s Cluster (EC2, t3.micro)             │
-        │                                                              │
-        │   ┌────────────────────────────────────────────────────┐   │
-        │   │        FastAPI App (aiops-incident-app)             │   │
-        │   │  ┌──────────────┐  ┌──────────────┐                │   │
-        │   │  │ /analyze-    │  │ /slack/       │  /ui (frontend)│   │
-        │   │  │  incident    │  │ incident-check│                │   │
-        │   │  └──────┬───────┘  └──────┬────────┘                │   │
-        │   │         │                 │                         │   │
-        │   │         ▼                 ▼                         │   │
-        │   │   ┌─────────────────────────────┐                   │   │
-        │   │   │   RAG Pipeline (log_analyzer)│                  │   │
-        │   │   │  Pinecone (retrieval) +      │                  │   │
-        │   │   │  HF Llama-3 (generation)     │                  │   │
-        │   │   └─────────────────────────────┘                   │   │
-        │   │         │                                            │   │
-        │   │         ▼                                            │   │
-        │   │   Jira ticket (jira_client) + Slack webhook          │   │
-        │   └────────────────────────────────────────────────────┘   │
-        │                                                              │
-        │   ConfigMap + Secret  |  Service (NodePort)  |  Ingress      │
+        │                     k3s Cluster (EC2, t3.micro)           │
+        │                                                           │
+        │   ┌─────────────────────────────────────────────────────┐ │
+        │   │        FastAPI App (aiops-incident-app)             │ │
+        │   │  ┌──────────────┐  ┌───────────────┐                │ │
+        │   │  │ /analyze-    │  │ /slack/       │  /ui (frontend)│ │
+        │   │  │  incident    │  │ incident-check│                │ │
+        │   │  └──────┬───────┘  └──────┬────────┘                │ │
+        │   │         │                 │                         │ │
+        │   │         ▼                 ▼                         │ │
+        │   │   ┌──────────────────────────────┐                  │ │
+        │   │   │   RAG Pipeline (log_analyzer)│                  │ │
+        │   │   │  Pinecone (retrieval) +      │                  │ │
+        │   │   │  HF Llama-3 (generation)     │                  │ │
+        │   │   └──────────────────────────────┘                  │ │
+        │   │         │                                           │ │
+        │   │         ▼                                           │ │
+        │   │   Jira ticket (jira_client) + Slack webhook         │ │
+        │   └─────────────────────────────────────────────────────┘ │
+        │                                                           │
+        │   ConfigMap + Secret  |  Service (NodePort)  |  Ingress   │
         └───────────────────────────────────────────────────────────┘
                                           │
                                           ▼
@@ -337,7 +337,7 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
 
 > _Add screenshots/GIFs here before publishing — recommended shots:_
 
-- [ ] Dashboard (`/ui`) — empty state and after analysis
+- ![Dashboard](Demo/Dashboard.png)
 - [ ] `/docs` Swagger UI
 - [ ] GitHub Actions pipeline — both jobs green
 - [ ] `kubectl get pods` / `kubectl get svc` output
