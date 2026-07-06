@@ -106,7 +106,7 @@ In real production environments, when a service throws an error, engineers spend
 ---
 ## System Design
 
-![System Design](Demo/1_2s_qjgmo3bYVzRu1DxJyPA.png)
+![System Design](Demo/system.png)
 
 ---
 
