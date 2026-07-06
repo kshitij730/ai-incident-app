@@ -15,6 +15,7 @@
 - [Overview](#overview)
 - [Problem Statement](#problem-statement)
 - [Architecture](#architecture)
+- [System Design](#system-design)
 - [Tech Stack](#tech-stack)
 - [Features](#features)
 - [DevOps Skills Demonstrated](#devops-skills-demonstrated)
@@ -102,6 +103,10 @@ In real production environments, when a service throws an error, engineers spend
                                           ▼
                               End user / Slack / Browser
 ```
+---
+## System Design
+
+![System Design](Demo/1_2s_qjgmo3bYVzRu1DxJyPA.png)
 
 ---
 
@@ -337,15 +342,14 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
 
 > _Add screenshots/GIFs here before publishing — recommended shots:_
 
-- ![Dashboard](Demo/Dashboard.png)
-- [ ] `/docs` Swagger UI
-- [ ] GitHub Actions pipeline — both jobs green
-- [ ] `kubectl get pods` / `kubectl get svc` output
-- [ ] Slack incident alert message
-- [ ] Slack `/incident-check` slash command in action
-- [ ] Auto-created Jira ticket
-- [ ] Terminal: `kubectl rollout status` showing successful deploy
-
+  ![Dashboard](Demo/Dashboard.png)
+  ![Swagger UI](Demo/docs.png)
+  ![Github Actions](Demo/2026-07-07003810.png)
+  ![kubectl](Demo/2026-07-07003957.png)
+  ![Slack Notification](Demo/2026-07-07004039.png)
+  ![Jira Tickets](Demo/2026-07-07005032.png)
+  ![EC2 Instance](Demo/2026-07-07005515.png)
+  
 *(Demo video: link here once recorded)*
 
 ---
