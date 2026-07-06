@@ -344,11 +344,11 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
 
   ![Dashboard](Demo/Dashboard.png)
   ![Swagger UI](Demo/docs.png)
-  ![Github Actions](Demo/2026-07-07003810.png)
-  ![kubectl](Demo/2026-07-07003957.png)
-  ![Slack Notification](Demo/2026-07-07004039.png)
-  ![Jira Tickets](Demo/2026-07-07005032.png)
-  ![EC2 Instance](Demo/2026-07-07005515.png)
+  ![Github Actions](Demo/github-actions.png)
+  ![kubectl](Demo/kubectl.png)
+  ![Slack Notification](Demo/slack-notification.png)
+  ![Jira Tickets](Demo/jira.png)
+  ![EC2 Instance](Demo/ec2.png)
   
 *(Demo video: link here once recorded)*
 
