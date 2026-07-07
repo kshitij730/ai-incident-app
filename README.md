@@ -340,8 +340,6 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
 
 ## Screenshots
 
-> _Add screenshots/GIFs here before publishing — recommended shots:_
-
   ![Dashboard](Demo/Dashboard.png)
   ![Swagger UI](Demo/docs.png)
   ![Github Actions](Demo/github-actions.png)
@@ -350,7 +348,7 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
   ![Jira Tickets](Demo/jira.png)
   ![EC2 Instance](Demo/ec2.png)
   
-*(Demo video: link here once recorded)*
+*(Demo video)*
 
 ---
 
