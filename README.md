@@ -463,21 +463,18 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
 ### DevSecOps Evidence
 
   ![GitHub Actions DevSecOps Workflow](Demo/github-actions.png)
+  ![Sonar Qube Report](Demo/sonar-qube-report.png)
 
-  **SonarQube report screenshot:** save the report screenshot as `Demo/sonarqube-report.png`, then add it here with `![SonarQube Report](Demo/sonarqube-report.png)`.
 
 ### Application & Deployment Evidence
 
   ![Dashboard](Demo/Dashboard.png)
   ![Swagger UI](Demo/docs.png)
-  ![Github Actions](Demo/github-actions.png)
   ![kubectl](Demo/kubectl.png)
   ![Slack Notification](Demo/slack-notification.png)
   ![Jira Tickets](Demo/jira.png)
   ![EC2 Instance](Demo/ec2.png)
   
-*(Demo video)*
-
 ---
 
 ## Known Limitations & Trade-offs
