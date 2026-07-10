@@ -16,11 +16,24 @@ spec:
       labels:
         app: aiops-incident-app
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: aiops-incident-app
           image: kshitijsharma788/aiops-incident-app:latest
           ports:
             - containerPort: 8000
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               memory: "128Mi"
@@ -33,6 +46,12 @@ spec:
                 name: aiops-config
             - secretRef:
                 name: aiops-secrets
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           livenessProbe:
             httpGet:
               path: /health
@@ -45,3 +64,6 @@ spec:
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 15
+      volumes:
+        - name: tmp
+          emptyDir: {}
