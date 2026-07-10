@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Pehle requirements copy karo (Docker layer caching ke liye)
 COPY app/requirements.txt .
 
-RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --user --no-cache-dir -r requirements.txt \
+    && pip install --user --no-cache-dir --upgrade \
+        "jaraco.context>=6.1.0" \
+        "wheel>=0.46.2"
 
 # ─── STAGE 2: Runner (Final Production Image) ──────────────
 FROM python:3.10-slim AS runner
@@ -19,6 +22,10 @@ FROM python:3.10-slim AS runner
 # curl install karo — HEALTHCHECK ke liye chahiye
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir --upgrade \
+        "jaraco.context>=6.1.0" \
+        "wheel>=0.46.2"
 
 # Non-root user banao — security best practice
 RUN useradd --create-home appuser
