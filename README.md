@@ -22,6 +22,8 @@
 - [AI/ML (AIOps) Skills Demonstrated](#aiml-aiops-skills-demonstrated)
 - [Repository Structure](#repository-structure)
 - [CI/CD Pipeline](#cicd-pipeline)
+- [DevSecOps Workflow Breakdown](#devsecops-workflow-breakdown)
+- [DevSecOps Setup Guide](#devsecops-setup-guide)
 - [Setup & Installation](#setup--installation)
 - [API Reference](#api-reference)
 - [ChatOps Usage (Slack)](#chatops-usage-slack)
@@ -233,6 +235,117 @@ ai-incident-app/
 
 ---
 
+---
+
+## DevSecOps Workflow Breakdown
+
+This repository now follows a staged DevSecOps pipeline where security runs before build, push, and deployment. The workflows are intentionally split into small reusable files, similar to a production CI/CD setup, instead of keeping everything inside one large workflow file.
+
+| Workflow | Purpose | Runs as |
+|---|---|---|
+| `code-quality.yml` | Python compile checks + Bandit SAST | Reusable workflow |
+| `secret-scanning.yml` | Gitleaks scan to detect committed secrets | Reusable workflow |
+| `dependency-scan.yml` | pip-audit scan for vulnerable Python dependencies | Reusable workflow |
+| `docker-scans.yml` | Hadolint, Trivy image scan, and Trivy Kubernetes IaC scan | Reusable workflow |
+| `sonar-scan.yml` | SonarQube/SonarCloud code quality and security analysis | Reusable workflow |
+| `code-tests.yml` | Docker build + API/frontend smoke tests | Reusable workflow |
+| `docker-push.yml` | Pushes the verified image to DockerHub | Reusable workflow |
+| `deploy.yml` | Deploys to k3s from the self-hosted runner | Reusable workflow |
+| `dast.yml` | OWASP ZAP baseline scan after deployment | Reusable/manual workflow |
+| `devsecops.yml` | Main orchestrator that connects all gates | Entry workflow |
+| `matrix.yml` | Manual Python version compatibility check | Manual workflow |
+
+**Execution order:**
+
+```text
+code quality + SAST
+        + secret scan
+        + dependency scan
+        + Docker/IaC scan
+        + SonarQube scan
+        + smoke tests
+                ->
+          DockerHub push
+                ->
+          k3s deployment
+                ->
+          OWASP ZAP DAST
+```
+
+**Path filtering:** documentation-only commits such as `README.md` changes do not trigger the pipeline. The workflow runs only when application code, Docker, Kubernetes manifests, scripts, or workflow files change.
+
+---
+
+## DevSecOps Setup Guide
+
+### SonarQube setup on EC2
+
+Run SonarQube Community Edition as a container on the EC2 instance:
+
+```bash
+docker run -d --name sonarqube-server -p 9000:9000 sonarqube:community
+```
+
+Then open:
+
+```text
+http://<EC2_PUBLIC_IP>:9000
+```
+
+Default login is `admin / admin`, and SonarQube will ask you to change the password on first login. Make sure port `9000` is allowed in the EC2 security group while configuring it.
+
+### SonarQube GitHub secrets
+
+Create a token from SonarQube:
+
+```text
+Profile -> My Account -> Security -> Generate Token
+```
+
+Add these repository secrets in GitHub:
+
+| Secret | Value |
+|---|---|
+| `SONAR_TOKEN` | SonarQube user token |
+| `SONAR_HOST_URL` | SonarQube server URL, for example `http://<EC2_PUBLIC_IP>:9000` |
+
+The workflow automatically sets the project key from the repository name, so a separate `sonar-project.properties` file is not required for this demo.
+
+### DockerHub secrets
+
+Add these repository secrets for image publishing:
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | DockerHub username |
+| `DOCKERHUB_TOKEN` | DockerHub access token |
+
+### Slack notification secret
+
+Add this secret if you want CI/CD notifications:
+
+| Secret | Value |
+|---|---|
+| `SLACK_WEBHOOK_URL` | Slack incoming webhook URL |
+
+### DAST target configuration
+
+OWASP ZAP needs a reachable deployed URL after CD. Configure one of these secrets:
+
+| Secret | Purpose |
+|---|---|
+| `DAST_TARGET_URL` | Full deployed app URL, preferred |
+| `EC2_HOST` | EC2 public IP/DNS fallback used as `http://<EC2_HOST>` |
+
+### Self-hosted runner for deployment
+
+The `deploy.yml` workflow runs on the EC2 self-hosted runner because the k3s cluster is local/private to that instance. The runner must have:
+
+- `kubectl` installed
+- access to `/home/ubuntu/.kube/config`
+- permission to update the `aiops-incident-app` Kubernetes Deployment
+
+
 ## Setup & Installation
 
 ### Prerequisites
@@ -346,6 +459,14 @@ curl -X POST http://<EC2_IP>:<PORT>/analyze-incident \
 ---
 
 ## Screenshots
+
+### DevSecOps Evidence
+
+  ![GitHub Actions DevSecOps Workflow](Demo/github-actions.png)
+
+  **SonarQube report screenshot:** save the report screenshot as `Demo/sonarqube-report.png`, then add it here with `![SonarQube Report](Demo/sonarqube-report.png)`.
+
+### Application & Deployment Evidence
 
   ![Dashboard](Demo/Dashboard.png)
   ![Swagger UI](Demo/docs.png)
