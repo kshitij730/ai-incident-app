@@ -43,7 +43,14 @@ RUN rm -rf \
         "wheel>=0.46.2" \
     && pip install --no-cache-dir --upgrade --target /home/appuser/.local/lib/python3.10/site-packages \
         "jaraco.context>=6.1.0" \
-        "wheel>=0.46.2"
+        "wheel>=0.46.2" \
+    && rm -rf \
+        /usr/local/lib/python3.10/site-packages/setuptools \
+        /usr/local/lib/python3.10/site-packages/setuptools-*.dist-info \
+        /usr/local/lib/python3.10/site-packages/pkg_resources \
+        /home/appuser/.local/lib/python3.10/site-packages/setuptools \
+        /home/appuser/.local/lib/python3.10/site-packages/setuptools-*.dist-info \
+        /home/appuser/.local/lib/python3.10/site-packages/pkg_resources
 
 # Application code copy karo
 COPY app/ .
