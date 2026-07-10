@@ -23,9 +23,6 @@ FROM python:3.10-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --upgrade \
-        "jaraco.context>=6.1.0" \
-        "wheel>=0.46.2"
 
 # Non-root user banao — security best practice
 RUN useradd --create-home appuser
@@ -33,6 +30,20 @@ WORKDIR /home/appuser
 
 # Builder stage se sirf installed Python packages copy karo
 COPY --from=builder /root/.local /home/appuser/.local
+
+RUN rm -rf \
+        /usr/local/lib/python3.10/site-packages/jaraco.context-*.dist-info \
+        /usr/local/lib/python3.10/site-packages/wheel-*.dist-info \
+        /usr/local/lib/python3.10/site-packages/wheel \
+        /home/appuser/.local/lib/python3.10/site-packages/jaraco.context-*.dist-info \
+        /home/appuser/.local/lib/python3.10/site-packages/wheel-*.dist-info \
+        /home/appuser/.local/lib/python3.10/site-packages/wheel \
+    && pip install --no-cache-dir --upgrade \
+        "jaraco.context>=6.1.0" \
+        "wheel>=0.46.2" \
+    && pip install --no-cache-dir --upgrade --target /home/appuser/.local/lib/python3.10/site-packages \
+        "jaraco.context>=6.1.0" \
+        "wheel>=0.46.2"
 
 # Application code copy karo
 COPY app/ .
