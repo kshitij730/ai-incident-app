@@ -34,7 +34,7 @@ jobs:
 
       - name: Run OWASP ZAP baseline scan
         if: steps.target.outputs.url != ''
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: ${{ steps.target.outputs.url }}

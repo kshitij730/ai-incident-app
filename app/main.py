@@ -149,7 +149,11 @@ async def slack_slash_command(request: Request):
         )
         # Async response Slack ko bhejo
         if response_url:
-            requests.post(response_url, json={"response_type": "in_channel", "text": slack_message})
+            requests.post(
+                response_url,
+                json={"response_type": "in_channel", "text": slack_message},
+                timeout=5
+            )
 
         return {"response_type": "ephemeral", "text": "Analyzing... result will appear shortly."}
 
@@ -173,4 +177,4 @@ def notify_slack(service_name: str, diagnosis: str, severity: str, jira_ticket: 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
