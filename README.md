@@ -176,49 +176,56 @@ In real production environments, when a service throws an error, engineers spend
 
 ```
 ai-incident-app/
-├── .github/workflows/
-│   └── build-push.yaml        # CI (build/test/push) + CD (deploy) pipeline
-├── app/
-│   ├── main.py                 # FastAPI app, routes, SLO tracking, ChatOps endpoint
-│   ├── log_analyzer.py         # RAG pipeline (Pinecone retrieval + Llama-3 generation)
-│   ├── jira_client.py          # Jira REST API integration
-│   └── requirements.txt
-├── frontend/
-│   └── index.html              # Self-service dashboard, served at /ui
-├── k8s-manifests/
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── configmap.yaml
-│   ├── secrets.yaml.example    # Template only — real file is gitignored
-│   └── ingress.yaml
-├── scripts/
-│   ├── deploy.sh
-│   ├── health-check.sh
-│   └── rollback.sh
-├── Dockerfile
-├── .dockerignore
-├── .gitignore
-└── README.md
+|-- .github/workflows/
+|   |-- code-quality.yml       # Python quality checks and SAST
+|   |-- code-tests.yml         # Docker build and smoke tests
+|   |-- dast.yml               # OWASP ZAP DAST scan
+|   |-- dependency-scan.yml    # Python dependency vulnerability scan
+|   |-- deploy.yml             # k3s deployment via self-hosted runner
+|   |-- devsecops.yml          # Main orchestrator workflow
+|   |-- docker-push.yml        # DockerHub build and push
+|   |-- docker-scans.yml       # Dockerfile, image, and IaC scans
+|   |-- matrix.yml             # Manual Python version matrix check
+|   |-- secret-scanning.yml    # Gitleaks secret scanning
+|   `-- sonar-scan.yml         # Optional SonarQube scan
+|-- app/
+|   |-- main.py                # FastAPI app, routes, SLO tracking, ChatOps endpoint
+|   |-- log_analyzer.py        # RAG pipeline (Pinecone retrieval + Llama-3 generation)
+|   |-- jira_client.py         # Jira REST API integration
+|   `-- requirements.txt
+|-- frontend/
+|   `-- index.html            # Self-service dashboard, served at /ui
+|-- k8s-manifests/
+|   |-- deployment.yaml
+|   |-- service.yaml
+|   |-- configmap.yaml
+|   |-- secrets.yaml.example   # Template only - real file is gitignored
+|   `-- ingress.yaml
+|-- scripts/
+|   |-- deploy.sh
+|   |-- health-check.sh
+|   `-- rollback.sh
+|-- Dockerfile
+|-- .dockerignore
+|-- .gitignore
+`-- README.md
 ```
 
 ---
 
 ## CI/CD Pipeline
 
-**Trigger:** every push to `main`
+**Trigger:** pushes and pull requests to `main`, but only when application, Docker, Kubernetes, script, or workflow files change. Documentation-only changes such as `README.md` do **not** start the pipeline.
 
-**Job 1 — `build-test-push`** (runs on GitHub-hosted runner)
-1. Checkout code
-2. Build Docker image
-3. Smoke test: spin up the image, hit `/health`
-4. Smoke test: verify `/ui` serves the frontend correctly (with redirect handling)
-5. Push image to DockerHub tagged with both `latest` and the short Git SHA
-6. Slack notification on success
+**Main workflow - `devsecops.yml`**
+1. Runs reusable security and quality workflows first: `code-quality.yml`, `secret-scanning.yml`, `dependency-scan.yml`, `docker-scans.yml`, and `sonar-scan.yml`
+2. Runs `code-tests.yml` for Docker build and smoke tests
+3. Runs `docker-push.yml` only after all checks pass on `main` pushes
+4. Runs `deploy.yml` on the self-hosted k3s runner after the image is pushed
+5. Runs `dast.yml` after deployment when `DAST_TARGET_URL` or `EC2_HOST` is configured
 
-**Job 2 — `deploy`** (runs on **self-hosted runner**, physically on the EC2 instance)
-1. `kubectl set image deployment/aiops-incident-app aiops-incident-app=<new-image>`
-2. `kubectl rollout status` to confirm the rollout completes
-3. Slack notification confirming deployment
+**Manual workflow - `matrix.yml`**
+1. Manually checks Python compatibility across 3.10, 3.11, and 3.12
 
 > **Why a self-hosted runner?** The k3s API server is only reachable from within the EC2 instance's private network. GitHub's cloud-hosted runners have no route to it, so the deploy step must execute on a runner physically located on the same machine as the cluster.
 

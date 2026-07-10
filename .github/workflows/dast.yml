@@ -1,0 +1,46 @@
+name: DAST
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dast:
+    name: OWASP ZAP baseline scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve DAST target
+        id: target
+        env:
+          DAST_TARGET_URL: ${{ secrets.DAST_TARGET_URL }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          if [ -n "$DAST_TARGET_URL" ]; then
+            echo "url=$DAST_TARGET_URL" >> "$GITHUB_OUTPUT"
+          elif [ -n "$EC2_HOST" ]; then
+            echo "url=http://$EC2_HOST" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for application
+        if: steps.target.outputs.url != ''
+        run: |
+          timeout 90s sh -c 'until curl -sf "${{ steps.target.outputs.url }}/health"; do sleep 3; done'
+
+      - name: Run OWASP ZAP baseline scan
+        if: steps.target.outputs.url != ''
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: ${{ steps.target.outputs.url }}
+          fail_action: false
+          allow_issue_writing: false
+
+      - name: Skip DAST when target is missing
+        if: steps.target.outputs.url == ''
+        run: echo "Set DAST_TARGET_URL or EC2_HOST secret to enable DAST."

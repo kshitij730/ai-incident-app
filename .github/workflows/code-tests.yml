@@ -1,0 +1,49 @@
+name: Code Tests
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Docker smoke tests
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.sha.outputs.short_sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image locally
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: test-image:${{ steps.sha.outputs.short_sha }}
+
+      - name: Smoke test API health check
+        run: |
+          docker run -d --name test-container -p 8000:8000 \
+            -e PINECONE_API_KEY=dummy \
+            -e HF_API_TOKEN=dummy \
+            test-image:${{ steps.sha.outputs.short_sha }}
+          sleep 8
+          curl -sf http://localhost:8000/health || (docker logs test-container && exit 1)
+
+      - name: Smoke test frontend
+        run: |
+          curl -sfL http://localhost:8000/ui | grep -qi "AIOps Incident Assistant" \
+            || (echo "Frontend not serving correctly!" && docker logs test-container && exit 1)
+
+      - name: Cleanup smoke test container
+        if: always()
+        run: docker rm -f test-container || true

@@ -1,0 +1,83 @@
+name: DevSecOps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "frontend/**"
+      - "k8s-manifests/**"
+      - "scripts/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "frontend/**"
+      - "k8s-manifests/**"
+      - "scripts/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+
+jobs:
+  code-quality:
+    name: Code quality and SAST
+    uses: ./.github/workflows/code-quality.yml
+
+  secret-scanning:
+    name: Secret scanning
+    uses: ./.github/workflows/secret-scanning.yml
+    secrets: inherit
+
+  dependency-checks:
+    name: Dependency checks
+    uses: ./.github/workflows/dependency-scan.yml
+
+  docker-checks:
+    name: Docker and IaC checks
+    uses: ./.github/workflows/docker-scans.yml
+
+  sonar-qube:
+    name: SonarQube scan
+    uses: ./.github/workflows/sonar-scan.yml
+    secrets: inherit
+
+  code-tests:
+    name: Code tests
+    uses: ./.github/workflows/code-tests.yml
+
+  docker_push:
+    name: Push image to DockerHub
+    needs:
+      - code-quality
+      - secret-scanning
+      - dependency-checks
+      - docker-checks
+      - sonar-qube
+      - code-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/docker-push.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy to k3s
+    needs: docker_push
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image_tag: ${{ needs.docker_push.outputs.image_tag }}
+    secrets: inherit
+
+  dast-scan:
+    name: DAST scan
+    needs: deploy
+    uses: ./.github/workflows/dast.yml
+    secrets: inherit

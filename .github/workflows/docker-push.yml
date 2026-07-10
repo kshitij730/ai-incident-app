@@ -1,0 +1,50 @@
+name: Docker Push
+
+on:
+  workflow_call:
+    outputs:
+      image_tag:
+        description: Short Git SHA image tag pushed to DockerHub
+        value: ${{ jobs.docker_push.outputs.image_tag }}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: kshitijsharma788/aiops-incident-app
+
+jobs:
+  docker_push:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.sha.outputs.short_sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push final image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.short_sha }}
+            ${{ env.IMAGE_NAME }}:latest
+
+      - name: Notify Slack that image was pushed
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"Docker image pushed after DevSecOps gates: ${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.short_sha }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
